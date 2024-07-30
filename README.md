@@ -3,9 +3,9 @@
   <img src="https://github.com/CompCy-lab/microglia-aging-clock/blob/main/microglia_img.png?raw=True" width="350" />
 </p>
 
-##Overview
+## Overview
 
-##Installation
+## Installation
 
 ```
 git clone https://github.com/CompCy-lab/microglia-aging-clock
@@ -17,7 +17,7 @@ Then enter the microglia-aging-clock working directory as,
 cd microglia-aging-clock
 ```
 
-##Example for frequency features
+## Example for frequency features
 
 Read in h5ad file containing single-cell data in annData format. We assumed cells have clusters with key `leiden`, sample ids indicating the samples they came from stored with key `sample_id`, and associated ages of the sample they came from stored with key `age`.
 
