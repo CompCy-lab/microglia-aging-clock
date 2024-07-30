@@ -21,7 +21,7 @@ cd microglia-aging-clock
 
 ## Example for frequency features
 
-Read in h5ad file `Hammond_adata_merge.h5ad` containing single-cell data in annData format. We assumed cells have clusters with key `leiden`, sample ids indicating the samples they came from stored with key `sample_id`, and associated ages of the sample they came from stored with key `age`.
+Read in .h5ad file `Hammond_adata_merge.h5ad` containing single-cell data in annData format. We assumed cells have clusters with key `leiden`, sample ids indicating the samples they came from stored with key `sample_id`, and associated ages of the sample they came from stored with key `age`.
 
 ```python
 import anndata
