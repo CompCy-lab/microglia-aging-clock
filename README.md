@@ -38,7 +38,8 @@ Extract frequency features and an associated list of ages.
 
 ```python
 frequencyFeatures = frequency_feats(data = data_input, meta_label = 'cluster_label')
-age_list = list(data_input.groupby(['sample_id'])['age'].agg(pd.Series.mode))
+ages = list(data_input.groupby(['sample_id'])['age'].agg(pd.Series.mode))
 ```
 
+You can now give `frequencyFeatures` and `ages` to any ML model.
 
