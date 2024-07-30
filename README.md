@@ -5,6 +5,8 @@
 
 ## Overview
 
+We explore how various unsupervised featurization strategies can be used to translate per-sample single-cell microglia profiles into models of age. Here, we provide examples for generating features from microglia from frequency, pseudobulk++ (our new proposed method), classical pseudobulk and scLKME.
+
 ## Installation
 
 ```
