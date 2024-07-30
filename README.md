@@ -13,7 +13,7 @@ We explore how various unsupervised featurization strategies can be used to tran
 git clone https://github.com/CompCy-lab/microglia-aging-clock
 ```
 
-Then enter the microglia-aging-clock working directory as,
+Once you have cloned the respository, change your working directory as,
 
 ```
 cd microglia-aging-clock
