@@ -1,4 +1,4 @@
-# Microglia Aging Clock from Computational Featurization Techniques
+# Translating Single-Cell Microglia Profiles into Aging Clocks
 <p>
   <img src="https://github.com/CompCy-lab/microglia-aging-clock/blob/main/microglia_img.png?raw=True" width="350" />
 </p>
