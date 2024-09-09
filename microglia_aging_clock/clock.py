@@ -5,6 +5,8 @@ import scanpy as sc
 import numpy as np
 import math # need to import math
 
+
+#### Frequency
 def frequency_feats(data=None, meta_label='meta_label'):
     """
     Computes frequency features (proportion of cells assigned to a metacluster within a sample)
@@ -30,7 +32,7 @@ def frequency_feats(data=None, meta_label='meta_label'):
 #### Pseudobulk++
 def pseudobulk_plus_plus(data = None, adataObj = None, cluster = None, label = None,numFeat = None, label_type='categorical'):
     """
-    Implements with fixed importance per gene
+    Implements with fixed importance per gene 
 
     Parameters
     ----------
@@ -80,3 +82,51 @@ def pseudobulk_plus_plus(data = None, adataObj = None, cluster = None, label = N
         pb_feat_mat[row_ind,:] = samp_feat_vec
         row_ind = row_ind + 1
     return pb_feat_mat, samp_label
+
+
+#### Classical Pseudobulk of highly variable genes
+def pseudobulk_hvg(data=None, meta_label='meta_label'):
+    """
+    Computes functional features (summed expression of metaclusters within a sample)
+    of all genes in sample.
+
+    Parameters
+    ----------
+    data: pandas.DataFrame
+        The dataframe containing gene expression data [which could be filtered to include only highly variable genes if desired].
+    meta_label: str
+        String referencing column containing metacluster label ID, which groups cells into metaclusters based on some biological or technical criteria.
+    
+    Returns
+    ----------
+    pseudobulk_feats: pandas.DataFrame
+        Dataframe containing functional features for each sample, where features are summed expressions of genes within each metacluster.
+    """
+    #print("Columns available:", data.columns)  # Debug: check columns
+    # Select numeric data for summing and retain columns necessary for grouping
+    numeric_data = data.select_dtypes(include=[np.number])
+    grouping_columns = data[['sample_id', meta_label]]
+
+    combined_data = numeric_data.join(grouping_columns)
+
+    # Check if grouping columns are present
+    if 'sample_id' not in combined_data.columns or meta_label not in combined_data.columns:
+        raise ValueError("Required columns for grouping are missing.")
+
+    # Group the data by 'sample_id' and the specified 'meta_label'
+    d = combined_data.groupby(['sample_id', meta_label])
+
+    summed_data = {}
+    
+    # Iterate through each group, summing the expression data
+    for name, group in d:
+        # Ensure to sum only the numeric expression data!
+        summed_expression = group.select_dtypes(include=[np.number]).sum()
+        summed_data[name] = summed_expression 
+
+    pseudobulk_feats = pd.DataFrame.from_dict(summed_data, orient='index')  
+    pseudobulk_feats = pseudobulk_feats.unstack().fillna(0)  
+
+    pseudobulk_feats.columns = ['{}_exp_{}'.format(col[1], col[0]) for col in pseudobulk_feats.columns]
+
+    return pseudobulk_feats

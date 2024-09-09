@@ -11,6 +11,7 @@ import sclkme
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from microglia_aging_clock.clock import *
+
 # Set random seed
 random_seed = 42
 random.seed(random_seed)
@@ -47,58 +48,7 @@ def prepare_data(adata_merge):
     return data
 
 
-
-#### Classical Pseudobulk of highly variable genes
-def pseudobulk_hvg(data=None, meta_label='meta_label'):
-    """
-    Computes functional features (summed expression of metaclusters within a sample)
-    of all genes in sample.
-
-    Parameters
-    ----------
-    data: pandas.DataFrame
-        The dataframe containing gene expression data [which could be filtered to include only highly variable genes if desired].
-    meta_label: str
-        String referencing column containing metacluster label ID, which groups cells into metaclusters based on some biological or technical criteria.
-    
-    Returns
-    ----------
-    pseudobulk_feats: pandas.DataFrame
-        Dataframe containing functional features for each sample, where features are summed expressions of genes within each metacluster.
-    """
-    #print("Columns available:", data.columns)  # Debug: check columns
-    # Select numeric data for summing and retain columns necessary for grouping
-    numeric_data = data.select_dtypes(include=[np.number])
-    grouping_columns = data[['sample_id', meta_label]]
-
-    combined_data = numeric_data.join(grouping_columns)
-
-    # Check if grouping columns are present
-    if 'sample_id' not in combined_data.columns or meta_label not in combined_data.columns:
-        raise ValueError("Required columns for grouping are missing.")
-
-    # Group the data by 'sample_id' and the specified 'meta_label'
-    d = combined_data.groupby(['sample_id', meta_label])
-
-    summed_data = {}
-    
-    # Iterate through each group, summing the expression data
-    for name, group in d:
-        # Ensure to sum only the numeric expression data!
-        summed_expression = group.select_dtypes(include=[np.number]).sum()
-        summed_data[name] = summed_expression 
-
-    pseudobulk_feats = pd.DataFrame.from_dict(summed_data, orient='index')  
-    pseudobulk_feats = pseudobulk_feats.unstack().fillna(0)  
-
-    pseudobulk_feats.columns = ['{}_exp_{}'.format(col[1], col[0]) for col in pseudobulk_feats.columns]
-
-    return pseudobulk_feats
-
-
-
-
-
+# Run sclKME
 def run_sclkme(adata_merge):
     sclkme.tl.sketch(adata_merge, n_sketch=1500, use_rep="X", key_added="X_512", method="kernel_herding")
     adata_sketch = adata_merge[adata_merge.obs['X_512_sketch']]
@@ -119,7 +69,7 @@ def run_sclkme(adata_merge):
     
     return x, y, groups
 
-
+# Run frequency_feats
 def pred_on_frequency(adata_merge):
     data = prepare_data(adata_merge)
     FreqFeat = frequency_feats(data=data, meta_label='cluster_label')
@@ -134,7 +84,7 @@ def pred_on_frequency(adata_merge):
     
     return x, y, groups
 
-
+# Run pseudobulk_plus_plus
 def run_pseudobulk_plus_plus(adata_merge, numFeat):
     data = prepare_data(adata_merge)
     x, y = pseudobulk_plus_plus(data=data, adataObj=adata_merge, cluster='cluster_label', label='age', numFeat=numFeat)
@@ -148,7 +98,7 @@ def run_pseudobulk_plus_plus(adata_merge, numFeat):
     
     return x, y, groups
 
-
+# Run pseudobulk_hvg
 def run_pseudobulk_hvg(adata_merge):
     data = prepare_data(adata_merge)
     pb_f_hvg = pseudobulk_hvg(data=data, meta_label='cluster_label')
@@ -208,12 +158,13 @@ def process_dataset(adata_path, dataset_name):
     adata_merge.obs_names_make_unique()
 
     methods = [
-        ('PB++25', lambda: run_pseudobulk_plus_plus(adata_merge, 25)),
-        ('Freq', lambda: pred_on_frequency(adata_merge)),
-        ('PB++50', lambda: run_pseudobulk_plus_plus(adata_merge, 50)),
-        ('sclkme', lambda: run_sclkme(adata_merge)),
-        ('PBHVG', lambda: run_pseudobulk_hvg(adata_merge))
+        ('PB++25', lambda: run_pseudobulk_plus_plus(adata_merge, 25)),  # Pseudobulk++ with 25 cells
+        ('Freq', lambda: pred_on_frequency(adata_merge)),               # Frequency-based prediction
+        ('PB++50', lambda: run_pseudobulk_plus_plus(adata_merge, 50)),  # Pseudobulk++ with 50 cells
+        ('sclkme', lambda: run_sclkme(adata_merge)),                    # scLKME method
+        ('PBHVG', lambda: run_pseudobulk_hvg(adata_merge))              # Pseudobulk with highly variable genes
     ]
+
 
     for method_name, method_func in methods:
         print(f"Running {method_name} for {dataset_name}")
@@ -228,10 +179,9 @@ def process_dataset(adata_path, dataset_name):
         run_classification(x, y, groups, f'{dataset_name}_{method_name}_classification.csv')
 
 
-
 if __name__ == "__main__":
-    # process_dataset('./Hammond_adata_merge_with_donors.h5ad', 'Hammond')
-    process_dataset('/Users/luvnadhawka/microglia_project_anndatas/Buckley_adata_merge.h5ad', 'Buckley')
-    # process_dataset('./Kracht_adata_merge_with_donors.h5ad', 'Kracht')
+    process_dataset('./Hammond_adata_merge_with_donors.h5ad', 'Hammond')
+    process_dataset('./Buckley_adata_merge.h5ad', 'Buckley')
+    process_dataset('./Kracht_adata_merge_with_donors.h5ad', 'Kracht')
 
     print("Classification completed for all datasets.")
