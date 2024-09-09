@@ -9,18 +9,30 @@ import math # need to import math
 #### Frequency
 def frequency_feats(data=None, meta_label='meta_label'):
     """
-    Computes frequency features (proportion of cells assigned to a metacluster within a sample)
+    Computes frequency features for each sample based on the proportion of cells 
+    assigned to each metacluster.
 
     Parameters
     ----------
-    data: pandas.DataFrame
-    meta_label: str
-        string referencing column containing metacluster label ID
+    data : pandas.DataFrame
+        Input data containing single-cell information. Must include columns for
+        'sample_id' and the metacluster labels.
+    meta_label : str, optional
+        Name of the column in 'data' containing metacluster label IDs.
+        Default is 'meta_label'.
 
     Returns
-    ----------
-    freq_feats: pandas.DataFrame
-        dataframe containing frequency features for each sample
+    -------
+    freq_feats : pandas.DataFrame
+        DataFrame containing frequency features for each sample. Each row represents
+        a sample, and each column represents the proportion of cells in a specific
+        metacluster, named as 'freq_{metacluster_id}'.
+
+    Notes
+    -----
+    - The function assumes that 'sample_id' is a column in the input DataFrame.
+    - Samples with no cells in a particular metacluster will have a frequency of 0.
+    - The sum of frequencies for each sample (row) will equal 1.
     """
 
     num = data.groupby(['sample_id', meta_label]).size().unstack().fillna(0)
@@ -29,22 +41,38 @@ def frequency_feats(data=None, meta_label='meta_label'):
     freq_feats.columns = ['freq_{}'.format(i) for i in freq_feats.columns]
     return freq_feats
 
+
 #### Pseudobulk++
 def pseudobulk_plus_plus(data = None, adataObj = None, cluster = None, label = None,numFeat = None, label_type='categorical'):
     """
-    Implements with fixed importance per gene 
+    Implements pseudobulk analysis with fixed importance per gene.
 
     Parameters
     ----------
-    data: pandas.DataFrame
-    adataObj : ann data object used to produce data
-    cluster : str for name of column of data which stores clusters
-    label: str for name of column of data which stores labels
-    ----------
-    pb_feat_mat: numpy array
-        sample-level features
-    samp_label: sample level labels
+    data : pandas.DataFrame
+        The input data containing single-cell information.
+    adataObj : AnnData
+        AnnData object used to produce the data.
+    cluster : str
+        Name of the column in 'data' which stores cluster information.
+    label : str
+        Name of the column in 'data' which stores label information.
+        This can be either categorical or continuous, as specified by label_type.
+    numFeat : int
+        Number of top features to consider for importance calculation.
+    label_type : str, optional
+        Type of the label column. Can be 'categorical' or 'continuous'.
+        Default is 'categorical'.
+
+    Returns
+    -------
+    pb_feat_mat : numpy.ndarray
+        Sample-level features matrix. Shape is (n_samples, n_clusters).
+    samp_label : list
+        Sample-level labels. For categorical labels, this will be the most frequent
+        label per sample. For continuous labels, this will be the mean value per sample.
     """
+
     adataObj.uns['log1p']["base"] = None
     sc.tl.rank_genes_groups(adataObj, groupby="leiden", use_raw=False)
     dedf = sc.get.rank_genes_groups_df(adataObj, group=None)
@@ -87,20 +115,41 @@ def pseudobulk_plus_plus(data = None, adataObj = None, cluster = None, label = N
 #### Classical Pseudobulk of highly variable genes
 def pseudobulk_hvg(data=None, meta_label='meta_label'):
     """
-    Computes functional features (summed expression of metaclusters within a sample)
-    of all genes in sample.
+    Computes functional features by summing gene expression within metaclusters for each sample.
+    This function is designed to work with highly variable genes (HVGs) but can be used with any gene expression data.
 
     Parameters
     ----------
-    data: pandas.DataFrame
-        The dataframe containing gene expression data [which could be filtered to include only highly variable genes if desired].
-    meta_label: str
-        String referencing column containing metacluster label ID, which groups cells into metaclusters based on some biological or technical criteria.
-    
+    data : pandas.DataFrame
+        The input dataframe containing gene expression data. It should include:
+        - Numeric columns for gene expression values
+        - A 'sample_id' column to identify different samples
+        - A column specified by 'meta_label' for metacluster information
+        Note: The input can be pre-filtered to include only highly variable genes if desired.
+
+    meta_label : str, optional
+        Name of the column containing metacluster label IDs. These labels group cells 
+        into metaclusters based on biological or technical criteria.
+        Default is 'meta_label'.
+
     Returns
-    ----------
-    pseudobulk_feats: pandas.DataFrame
-        Dataframe containing functional features for each sample, where features are summed expressions of genes within each metacluster.
+    -------
+    pseudobulk_feats : pandas.DataFrame
+        A dataframe containing pseudobulk features for each sample. Each row represents 
+        a sample, and each column represents the summed expression of a gene within a 
+        specific metacluster, named as '{gene}_exp_{metacluster}'.
+
+    Raises
+    ------
+    ValueError
+        If the required columns ('sample_id' and the specified 'meta_label') are missing from the input data.
+
+    Notes
+    -----
+    - The function sums expression values for each gene across all cells within each 
+      metacluster for each sample.
+    - Only numeric columns are considered for expression summation.
+    - Missing values in the resulting pseudobulk features are filled with 0.
     """
     #print("Columns available:", data.columns)  # Debug: check columns
     # Select numeric data for summing and retain columns necessary for grouping
