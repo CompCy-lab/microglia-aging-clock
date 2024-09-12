@@ -68,7 +68,7 @@ frequencyFeatures = frequencyFeatures.drop(columns=['age'])
 if 'donor' in data.columns:
     groups = data.groupby('sample_id')['donor'].first()
 else:
-    groups = pd.Series(x.index, index=x.index)
+    groups = pd.Series(frequencyFeatures.index, index=frequencyFeatures.index)
 ```
 
 You can now give `frequencyFeatures` and `ages` to any ML model. The `groups` variable can be used for stratified train-test splitting, ensuring that samples from the same donor are not split between training and testing sets. 
@@ -81,5 +81,5 @@ We provide two example scripts that demonstrate how to use all the featurization
 
 2. [example_code_regression.py](https://github.com/CompCy-lab/microglia-aging-clock/blob/main/example_code_regression.py): This script demonstrates how to use the featurization methods to extract features and perform age regression using Lasso regression.
 
-These examples provide a complete guide on how to preprocess data, extract features using various methods, and apply machine learning techniques for age prediction.
+These examples provide a guide on how to preprocess data, extract features using various methods, and apply machine learning techniques for age prediction.
 
