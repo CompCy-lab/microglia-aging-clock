@@ -5,7 +5,7 @@
 
 ## Overview
 
-We explore how various unsupervised featurization strategies can be used to translate per-sample single-cell microglia profiles into models of age. Here, we provide examples for generating features from microglia from sclKME, frequency, pseudobulk++ (our new proposed method), and classical pseudobulk
+We explore how various unsupervised featurization strategies can be used to translate per-sample single-cell microglia profiles into models of age. Here, we provide examples for generating features from microglia from scLKME, frequency, pseudobulk++ (our new proposed method), and classical pseudobulk.
 
 ## Installation
 Clone the repository:
@@ -44,7 +44,7 @@ import os
 adata_merge = sc.read_h5ad(os.path.join('data','Hammond_adata_merge_with_donors.h5ad'))
 ```
 
-Given the keys described above with metadata about the cells, prepare a pandas data frame to input to the frequency function
+Given the keys described above with metadata about the cells, prepare a pandas data frame to input to the frequency function:
 
 ```python
 from microglia_aging_clock import *
@@ -57,7 +57,7 @@ if 'donor' in adata_merge.obs.columns:
     data['donor'] = adata_merge.obs['donor'].copy()
 ```
 
-Extract frequency features and an associated list of ages.
+Extract frequency features and an associated list of ages:
 
 ```python
 frequencyFeatures = frequency_feats(data=data, meta_label='cluster_label')
@@ -75,7 +75,7 @@ You can now give `frequencyFeatures` and `ages` to any ML model. The `groups` va
 
 ## Example Usage
 
-We provide two example scripts that demonstrate how to use all the featurization methods (sclKME, frequency, pseudobulk++, classical pseudobulk) for age prediction:
+We provide two example scripts that demonstrate how to use all the featurization methods (scLKME, frequency, pseudobulk++, classical pseudobulk) for age prediction:
 
 1. [example_code_classification.py](https://github.com/CompCy-lab/microglia-aging-clock/blob/main/example_code_classification.py): This script shows how to use the different featurization methods to extract features from single-cell data and use them for age classification using Random Forest.
 
